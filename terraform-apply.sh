@@ -3,6 +3,11 @@
 
 set -e
 
+if [ -z "$TEMPLATE_DIR" ]; then
+  echo "must specify \$TEMPLATE_DIR" >&2
+  exit 1
+fi
+
 if [ -z "$STACK_NAME" ]; then
   echo "must specify \$STACK_NAME" >&2
   exit 1
@@ -22,12 +27,6 @@ if [ -z "$AWS_ACCESS_KEY_ID" ] || [ -z "$AWS_SECRET_ACCESS_KEY" ]; then
   echo "AWS credentials not found in params; attempting to use Instance Profile." >&2
 fi
 
-DIR="terraform-templates"
-
-if [ -n "$TEMPLATE_SUBDIR" ]; then
-  DIR="$DIR/$TEMPLATE_SUBDIR"
-fi
-
 terraform remote config \
   -backend=s3 \
   -backend-config="bucket=${S3_TFSTATE_BUCKET}" \
@@ -35,10 +34,10 @@ terraform remote config \
 
 terraform get \
   -update \
-  $DIR
+  $TEMPLATE_DIR
 
 terraform apply \
   -refresh=true \
-  $DIR
+  $TEMPLATE_DIR
 
 cp .terraform/terraform* terraform-state
